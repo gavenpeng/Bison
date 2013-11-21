@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="gbk"?>
+<config>
+    <configuration>
+	    <property name="port" value="7100"></property>
+		<property name="handlers" value="10"></property>
+	    <property name="maxQueueSize" value="67108864"></property>
+		<property name="maxQueueLength" value="100"></property>
+		<property name="readBufferSize" value="4096"></property>
+		<property name="sendBufferSize" value="4194304"></property>
+		<property name="receiveBufferSize" value="4194304"></property>
+    </configuration>
+	<access ip="127.0.0.1"></access>
+	<access ip="192.168.1.134"></access>
+	<access ip="192.168.4.*"></access>
+	<!-- 
+	<dataSource name="default" desc="cmg3db" driverName="com.mysql.jdbc.Driver"
+		dbUrl="jdbc:mysql://cmg3.chamago.com:3306/open?useUnicode=true&amp;characterEncoding=UTF-8&amp;useOldAliasMetadataBehavior=true" 
+		userName="gavin.peng"
+		passWord="gavin.peng" serverType="mysql" startNum="2" maxNum="10"
+		interval="1" checkSql="SELECT 0 FROM dual">
+	</dataSource>
+	 -->
+	<threads>
+		<thread id="1" className="com.chamago.bison.thread.BisonConfigCheckThread" desc="ConfigReloadThread" interval="2000"/>
+	</threads>
+</config>
