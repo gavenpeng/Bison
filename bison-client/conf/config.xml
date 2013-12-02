@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+	<group id="1" name="test">
+		<node id="1" ip="localhost" name="test" port="7100"/>
+		<!-- 
+		<node id="2" ip="192.168.4.143" name="test" port="7100"/>
+		<node id="3" ip="192.168.4.144" name="test" port="7100"/>
+		 -->
+		<!-- 
+		<node id="2" ip="192.168.4.145" name="test" port="8100"/>
+		 -->
+	</group>
+</config>
