@@ -9,6 +9,7 @@ public class Main
   {
     new BisonContext(config);
     Thread.sleep(2000L);
+    
   }
 
   public static void main(String[] args)
