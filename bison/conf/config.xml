@@ -14,9 +14,9 @@
 	<access ip="192.168.4.*"></access>
 	<!-- 
 	<dataSource name="default" desc="cmg3db" driverName="com.mysql.jdbc.Driver"
-		dbUrl="jdbc:mysql://cmg3.chamago.com:3306/open?useUnicode=true&amp;characterEncoding=UTF-8&amp;useOldAliasMetadataBehavior=true" 
-		userName="gavin.peng"
-		passWord="gavin.peng" serverType="mysql" startNum="2" maxNum="10"
+		dbUrl="jdbc:mysql://localhost:3306/test?useUnicode=true&amp;characterEncoding=UTF-8&amp;useOldAliasMetadataBehavior=true" 
+		userName="test"
+		passWord="testdat" serverType="mysql" startNum="2" maxNum="10"
 		interval="1" checkSql="SELECT 0 FROM dual">
 	</dataSource>
 	 -->
