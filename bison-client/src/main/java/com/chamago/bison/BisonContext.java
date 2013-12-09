@@ -38,8 +38,8 @@ import org.apache.mina.transport.socket.nio.NioSocketConnector;
  * 
  * @author Gavin.peng
  * 
- * 2013-10-16 下午02:46:50
- × bison-client
+ * 2013-10-16 涓嬪崍02:46:50
+ 脳 bison-client
  */
 public class BisonContext
 {
@@ -154,7 +154,7 @@ public class BisonContext
 
         this.connectQueue.offer(objNode);
         objGroup.addNode(objNode);
-        this.logger.info("加载节点 --->  " + objNode.toString());
+        this.logger.info("鍔犺浇鑺傜偣 --->  " + objNode.toString());
       }
       this.groupMaps.put(gid, objGroup);
     }
@@ -163,7 +163,7 @@ public class BisonContext
 
   protected int send_message(BisonObject sender) {
     if (!this.sendQueue.offer(sender)) {
-      System.out.println("发送消息 入队列失败");
+      System.out.println("鍙戦�娑堟伅 鍏ラ槦鍒楀け璐�);
     }
 
     return 0;
@@ -173,9 +173,9 @@ public class BisonContext
     try {
       byte[] msg = (byte[])message;
       int msgID = ByteUtil.readInt(msg, 0);
-      int key = ByteUtil.readInt(msg, 4);
-      int ret = ByteUtil.readInt(msg, 8);
       if ((msgID == BeanCallCode.BEAN_CALL_ID) || (msgID == BeanCallCode.INTERFACE_CALL_ID)) {
+    	int key = ByteUtil.readInt(msg, 4);
+        int ret = ByteUtil.readInt(msg, 8);
         int idx = getManagerIdx(key);
         BisonObject o = this.amanager[idx].findManageObject(key);
         if (o != null) {
@@ -186,7 +186,7 @@ public class BisonContext
           o._onReceiveMessageEvent(ret, obj);
           obj = null;
         } else {
-          this.logger.error("没有找到通知对象 " + key);
+          this.logger.error("娌℃湁鎵惧埌閫氱煡瀵硅薄 " + key);
         }
         this.amanager[idx].removeManageObject(key);
         o = null;
@@ -194,7 +194,7 @@ public class BisonContext
       msg = (byte[])null;
       message = null;
     } catch (Exception e) {
-      this.logger.error("处理消息出现异常", e);
+      this.logger.error("澶勭悊娑堟伅鍑虹幇寮傚父", e);
     }
     message = null;
   }
@@ -214,10 +214,10 @@ public class BisonContext
       } else {
     	if(objNode == null){
     		try {
-    			System.out.println("等待和服务端建立连接 ");
+    			System.out.println("绛夊緟鍜屾湇鍔＄寤虹珛杩炴帴 ");
 				Thread.sleep(2000);
 				send_message(obj);
-				System.out.println("msg obj:重新 进入发送队列");
+				System.out.println("msg obj:閲嶆柊 杩涘叆鍙戦�闃熷垪");
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -225,11 +225,11 @@ public class BisonContext
     	}else{
     		
     	}
-    	System.out.println("没有可以用的接受node");
+    	System.out.println("娌℃湁鍙互鐢ㄧ殑鎺ュ彈node");
         ret = -7;
       }
     } else {
-      System.out.println("没有可以用的接受服务端");
+      System.out.println("娌℃湁鍙互鐢ㄧ殑鎺ュ彈鏈嶅姟绔�);
       ret = -6;
     }
     return ret;
@@ -379,7 +379,7 @@ public class BisonContext
 
     public void processQueueElement(E o, int threadID)
     {
-      //System.out.println("用RbcContext 来发送");
+      //System.out.println("鐢≧bcContext 鏉ュ彂閫�);
       BisonContext.this.send_message_now((BisonObject)o);
     }
 
@@ -404,7 +404,7 @@ public class BisonContext
         ConnectFuture cf = BisonContext.this.connector.connect(node.getRemoteAddress());
         cf.awaitUninterruptibly();
         if (!cf.isConnected()) {
-          BisonContext.this.logger.info("建立连接失败 " + node.toString());
+          BisonContext.this.logger.info("寤虹珛杩炴帴澶辫触 " + node.toString());
           try {
             if (BisonContext.this.connectQueue.size() == 0)
               Thread.sleep(5000L);
@@ -419,7 +419,7 @@ public class BisonContext
         cf.getSession().setAttribute(SESSION_NODE_KEY, node);
         node.setSession(cf.getSession());
         node.setConnected(true);
-        BisonContext.this.logger.info("建立连接成功 " + node.toString());
+        BisonContext.this.logger.info("寤虹珛杩炴帴鎴愬姛 " + node.toString());
       }
     }
   }
