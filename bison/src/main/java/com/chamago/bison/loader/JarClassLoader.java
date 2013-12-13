@@ -43,12 +43,12 @@ public class JarClassLoader extends AbstractClassLoader
   public void init()
   {
     try {
-      String ss = System.getProperty("SERV_HOME") + File.separator + "service";
+      String ss = System.getProperty("bison.service.home") + File.separator + "service";
       this.classRepository.add(ss);
       this.classRepository.add(ss + File.separator + "classes");
       addJarPath(ss);
 
-      ss = System.getProperty("SERV_HOME") + File.separator + "plugin";
+      ss = System.getProperty("bison.service.home") + File.separator + "plugin";
       addJarPath(ss);
 
       loadJarResouseFormPath();

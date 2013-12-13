@@ -204,7 +204,7 @@ public class BisonServer
         try {
           Thread.sleep(10000L);
           boolean blnNeed = false;
-          String ss = System.getProperty("SERV_HOME") + File.separator + "service";
+          String ss = System.getProperty("bison.service.home") + File.separator + "service";
           File dir = new File(ss);
           File[] files = dir.listFiles();
           for (int i = 0; i < files.length; ++i) {
