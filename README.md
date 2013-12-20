@@ -1,4 +1,26 @@
 bison
 =====
 
-A network communication framework coded in java base  on apache mina
+Bison 是一个JAVA 程间的通信框架，基于apache mina 实现，对mina进行了byteBuffer 缓冲区重用以及半包出处时减少拷贝。
+
+客户端(bison-client) 功能点
+
+1 业务分组。
+
+2 支持分组内负载均衡。
+
+3 支持横向扩展。
+
+服务端(bison)
+
+1 支持热部署
+
+2 支持高用性：高可用的一个基本原则，可以接受快速的失败，但不能接受长时间的等待。
+
+3 资源统一管理。数据库连接池，工作线程,等。
+
+4 支持白名单，黑名单。
+
+分享的目的
+
+bison 简单易用的RPC框架，对外就依赖mina，没有太多的配置，很容易部署，分享在这里完全是为了相互学习。如果你有什么问题，可以在新浪微博@深海之倚天剑(http://weibo.com/jamvp)给我发消息。
