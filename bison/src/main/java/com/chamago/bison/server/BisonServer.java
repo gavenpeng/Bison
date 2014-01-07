@@ -4,7 +4,6 @@ import com.chamago.bison.codec.BisonCodecFactory;
 import com.chamago.bison.loader.JarClassLoader;
 import com.chamago.bison.logger.Logger;
 import com.chamago.bison.logger.LoggerFactory;
-import com.chamago.bison.stream.BisonStreamServer;
 import com.chamago.bison.util.xml.JXmlWapper;
 
 import java.io.File;
@@ -27,6 +26,7 @@ import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
  */
 public class BisonServer
 {
+  public static final String SHUTDOWN_HOOK_KEY = "bison.shutdown.hook";
   private int maxQueueLength;
   private int maxQueueSize;
   private int DEFAULT_MAX_QUEUE_LENGTH=0;
@@ -39,8 +39,9 @@ public class BisonServer
   private int handlers = 10;
   
   private final Logger logger;
-  private BisonStreamServer streamServer;
+  private volatile boolean running = true;
   private BisonServerHandler minaHandler = null;
+  private Thread reloadThread;
  
   public BisonServer() throws IOException {
 	if (System.getProperty("conf.dir") == null) {
@@ -49,8 +50,8 @@ public class BisonServer
     this.logger = LoggerFactory.getLogger("bison");
     props = new Properties();
     initBison();
+    addShutdownHook();
     offerService();
-    createStreamServer();
     System.setProperty("SYSTEM_PROCESS_RECV_THREADS", String.valueOf(handlers));
     this.logger.info("Bison Server Listening on port " + port);
     this.logger.info("Bison Server config file {}/{}", System.getProperty("conf.dir"), "config.xml");
@@ -96,7 +97,6 @@ public class BisonServer
   
   
   protected void offerService() throws IOException{
-	  
 	  SocketAcceptor acceptor = new NioSocketAcceptor();
       acceptor.setReuseAddress(true);
       acceptor.getSessionConfig().setReadBufferSize(readBufferSize);
@@ -111,96 +111,106 @@ public class BisonServer
       this.minaHandler.setClassLoader(new JarClassLoader());
       acceptor.setHandler(this.minaHandler);
 
-      new ReloadBusiThread().start();
-      
+      this.reloadThread = new ReloadBusiThread();
+      this.reloadThread.start();
       acceptor.bind(new InetSocketAddress(port));
 	  
   }
   
-  public void createStreamServer() throws IOException{
-	  this.streamServer = new BisonStreamServer();
+  public void addShutdownHook(){
+	  Runtime.getRuntime().addShutdownHook(new Thread() {
+	      public void run() {
+	    	  stopService();
+	      	}
+	  });
   }
   
   public void stopService(){
+	 this.logger.info("Bison Server start exit server on port " + port+"......");
+	 this.running = false;
+	 this.reloadThread.interrupt();
 	 this.minaHandler.cleanAll(); 
+	 this.logger.info("Bison Server is stoped");
   }
-    public int getMaxQueueLength() {
+  
+  
+  public int getMaxQueueLength() {
 	 return maxQueueLength;
-	}
+  }
 	
-	public void setMaxQueueLength(int maxQueueLength) {
-		this.maxQueueLength = maxQueueLength;
-	}
-	
-	public int getMaxQueueSize() {
-		return maxQueueSize;
-	}
-	
-	public void setMaxQueueSize(int maxQueueSize) {
-		this.maxQueueSize = maxQueueSize;
-	}
-	
-	public int getReadBufferSize() {
-		return readBufferSize;
-	}
-	
-	public void setReadBufferSize(int readBufferSize) {
-		this.readBufferSize = readBufferSize;
-	}
-	
-	public int getSendBufferSize() {
-		return sendBufferSize;
-	}
-	
-	public void setSendBufferSize(int sendBufferSize) {
-		this.sendBufferSize = sendBufferSize;
-	}
-	
-	public int getReceiveBufferSize() {
-		return receiveBufferSize;
-	}
-	
-	public void setReceiveBufferSize(int receiveBufferSize) {
-		this.receiveBufferSize = receiveBufferSize;
-	}
-	
-	public int getPort() {
-		return port;
-	}
-	
-	public void setPort(int port) {
-		this.port = port;
-	}
-	
-	public BisonServerHandler getHandler() {
-		return this.minaHandler;
-	}
-	
-	public void setHandler(BisonServerHandler handler) {
-		this.minaHandler = handler;
-	}
+  public void setMaxQueueLength(int maxQueueLength) {
+	this.maxQueueLength = maxQueueLength;
+  }
+
+  public int getMaxQueueSize() {
+	return maxQueueSize;
+  }
+
+  public void setMaxQueueSize(int maxQueueSize) {
+	this.maxQueueSize = maxQueueSize;
+  }
+
+  public int getReadBufferSize() {
+	return readBufferSize;
+  }
+
+  public void setReadBufferSize(int readBufferSize) {
+	this.readBufferSize = readBufferSize;
+  }
+
+  public int getSendBufferSize() {
+	return sendBufferSize;
+  }
+
+  public void setSendBufferSize(int sendBufferSize) {
+	this.sendBufferSize = sendBufferSize;
+  }
+
+  public int getReceiveBufferSize() {
+	return receiveBufferSize;
+  }
+
+  public void setReceiveBufferSize(int receiveBufferSize) {
+	this.receiveBufferSize = receiveBufferSize;
+  }
+
+  public int getPort() {
+	return port;
+  }
+
+  public void setPort(int port) {
+	this.port = port;
+  }
+
+  public BisonServerHandler getHandler() {
+	return this.minaHandler;
+  }
+
+  public void setHandler(BisonServerHandler handler) {
+	this.minaHandler = handler;
+  }
 
 
-	
-	public int getHandlers() {
-		return handlers;
-	}
 
-	public void setHandlers(int handlers) {
-		this.handlers = handlers;
-	}
+  public int getHandlers() {
+	return handlers;
+  }
+
+  public void setHandlers(int handlers) {
+	this.handlers = handlers;
+  }
 
 
 
   class ReloadBusiThread extends Thread
   {
-    HashMap<String, Long> hjar = new HashMap();
+    HashMap<String, Long> hjar = new HashMap<String, Long>();
 
     ReloadBusiThread() {
     }
 
     public void run() {
-      while (true){
+      while (running){
         try {
           Thread.sleep(10000L);
           boolean blnNeed = false;

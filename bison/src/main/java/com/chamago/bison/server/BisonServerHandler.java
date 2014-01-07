@@ -73,7 +73,7 @@ public class BisonServerHandler extends IoHandlerAdapter
       this.hThreads.put(String.valueOf(i), handler);
     }
     rtm = new BisonThreadManager(cfgFile,this);
-    rtm.startRbcThread(null, this.pool);
+    rtm.startBisonThread(null, this.pool);
   }
 
   
@@ -161,11 +161,12 @@ public class BisonServerHandler extends IoHandlerAdapter
 
   public void cleanAll(){
 	this.recvQueue.clear();
-    Iterator iterator = this.hThreads.keySet().iterator();
+    Iterator<String> iterator = this.hThreads.keySet().iterator();
     while (iterator.hasNext()) {
-      Object key = iterator.next();
+      String key = iterator.next();
       Handler dt = (Handler)this.hThreads.get(key);
       dt.stopThread();
+      this.logger.info("停止Bison RPC 线程 " + dt.getName());
       dt = null;
     }
     this.hThreads.clear();
