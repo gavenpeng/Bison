@@ -2,7 +2,7 @@
 bin=`dirname "$0"`
 bin=`cd "$bin">/dev/null; pwd`
 
-BISON_HOME=/home/chamago/bison_test
+BISON_HOME=/home/xxx/bison
 JAVA=$JAVA_HOME/bin/java
 
 BISON_OPTS="-Dconf.dir=$BISON_HOME/conf"
