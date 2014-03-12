@@ -18,9 +18,13 @@
 	<dependency>
 	  <groupId>com.chamago</groupId>
 	  <artifactId>mina</artifactId>
-	  <version>0.0.1-SNAPSHOT</version>
+	  <version>0.0.1</version>
 	</dependency>
-	 
+	<dependency>
+	  <groupId>org.jdom</groupId>
+	  <artifactId>jdom</artifactId>
+	  <version>2.0.2</version>
+	</dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -39,19 +43,45 @@
 	</dependency>
   </dependencies>
   <build>    
-      <plugins>    
+      <plugins>  
+          <plugin>  
+                <groupId>org.apache.maven.plugins</groupId>  
+                <artifactId>maven-jar-plugin</artifactId>  
+                <version>2.3.1</version>  
+                <configuration>  
+                     <archive>    
+                          <manifest>    
+                               <addClasspath>true</addClasspath>  
+                               <classpathPrefix>lib/</classpathPrefix>  
+                               <mainClass>com.mina.bison.server.RemoteBeanCallServer</mainClass>    
+                          </manifest>    
+                     </archive>    
+                </configuration>  
+                <executions>  
+                    <execution>  
+                        <phase>package</phase>  
+                    </execution>  
+                </executions>  
+            </plugin>    
           <plugin>    
               <artifactId>maven-assembly-plugin</artifactId>    
               <configuration>    
-                  <descriptorRefs>    
-                      <descriptorRef>jar-with-dependencies</descriptorRef>    
-                  </descriptorRefs>    
-                  <archive>    
-                      <manifest>  
-						<mainClass>com.mina.bison.server.RemoteBeanCallServer</mainClass>                      
-					  </manifest>    
-                  </archive>    
-              </configuration>    
+                  <descriptors> <!--描述文件路径-->  
+	                    <descriptor>src/main/resources/assembly.xml</descriptor>  
+	              </descriptors>     
+              </configuration>
+              <executions>
+              	<execution>
+              		<id>assemble bison</id>
+              		<phase>package</phase>
+              		<goals>    
+			           <goal>single</goal><!-- 只运行一次 -->    
+			        </goals>
+			        <configuration>  
+	                    <outputDirectory>target</outputDirectory> 
+            		</configuration> 
+              	</execution>
+              </executions>    
           </plugin>    
       </plugins>    
   </build>  
