@@ -1,0 +1,31 @@
+#! /usr/bin/env bash
+bin=`dirname "$0"`
+bin=`cd "$bin">/dev/null; pwd`
+
+COMETSERVER_HOME=/home/chamago/cometserver
+JAVA=$JAVA_HOME/bin/java
+
+JAVA_OPTS="-server -Xms4g -Xmx4g -Xmn512m -XX:PermSize=512m -XX:MaxPermSize=512m $JAVA_OPTS"
+
+export GC_OPTS="$GC_OPTS -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:-UseBiasedLocking -XX:BiasedLockingStartupDelay=0"
+export GC_LOG="-Xloggc:$COMETSERVER_HOME/logs/cometserver.gc"
+export GC_OPTS="$GC_OPTS $GC_LOG"
+export JAVA_OPTS="$JAVA_OPTS $GC_OPTS"
+
+COMETSERVER_OPTS="-Dconf.dir=$COMETSERVER/conf"
+COMETSERVER_OPTS="$COMETSERVER_OPTS -Dbison.service.home=$COMETSERVER_HOME"
+
+export JAVA_OPTS="$JAVA_OPTS $COMETSERVER_OPTS"
+
+CLASSPATH=$JAVA_HOME/lib/tools.jar
+CLASSPATH=${CLASSPATH}:$COMETSERVER_HOME/conf
+
+for f in $COMETSERVER_HOME/lib/*.jar; do
+  CLASSPATH=${CLASSPATH}:$f;
+done
+
+
+
+CLASS='com.chamago.cometserver.CometServer'
+
+exec "$JAVA" -XX:OnOutOfMemoryError="kill -9 %p" $JAVA_OPTS -classpath "$CLASSPATH" $CLASS "$@"

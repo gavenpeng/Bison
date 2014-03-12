@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="gbk"?>
+<config>
+    <configuration>
+	    <property name="port" value="7100"></property>
+		<property name="handlers" value="10"></property>
+	    <property name="maxQueueSize" value="10240"></property>
+		<property name="maxQueueLength" value="100"></property>
+		<property name="readBufferSize" value="4096"></property>
+		<property name="sendBufferSize" value="4194304"></property>
+		<property name="receiveBufferSize" value="4194304"></property>
+    </configuration>
+	<access ip="127.0.0.1"></access>
+	<access ip="192.168.1.134"></access>
+	<access ip="192.168.4.*"></access>
+	
+	
+	<threads>
+		<thread id="1" className="com.chamago.bison.thread.BisonConfigCheckThread" desc="ConfigReloadThread" interval="2000"/>
+	</threads>
+</config>
