@@ -16,9 +16,14 @@
 
   <dependencies>
 	<dependency>
-	  <groupId>com.chamago</groupId>
-	  <artifactId>mina</artifactId>
-	  <version>0.0.1-SNAPSHOT</version>
+	  <groupId>org.apache.mina</groupId>
+	  <artifactId>mina-core</artifactId>
+	  <version>2.0.7</version>
+	</dependency>
+	<dependency>
+	  <groupId>org.jdom</groupId>
+	  <artifactId>jdom2</artifactId>
+	  <version>2.0.5</version>
 	</dependency>
     <dependency>
       <groupId>junit</groupId>
