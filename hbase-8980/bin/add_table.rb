@@ -130,6 +130,7 @@ statuses = fs.listStatus(srcdir)
 for status in statuses
   next unless status.isDir()
   next if status.getPath().getName() == "compaction.dir"
+  #here is chanage
   regioninfofile =  Path.new(status.getPath(), ".regioninfo")
   unless fs.exists(regioninfofile)
     LOG.warn("Missing .regioninfo: " + regioninfofile.toString())
@@ -142,6 +143,7 @@ for status in statuses
   is.close()
   # TODO: Need to redo table descriptor with passed table name and then recalculate the region encoded names.
   p = Put.new(hri.getRegionName())
+  #here is chanage
   p.add(HConstants::CATALOG_FAMILY, HConstants::REGIONINFO_QUALIFIER, Writables.getBytes(hri))
   metaTable.put(p)
   LOG.info("Added to catalog: " + hri.toString())
