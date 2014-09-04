@@ -102,7 +102,7 @@ public class StreamCometConnection extends CometConnection {
 			this.connect = connect;
 		}
 
-		@Override
+		//@Override
 		public void run() {
 			
 			ServletResponse resp = this.connect.getResponse();
