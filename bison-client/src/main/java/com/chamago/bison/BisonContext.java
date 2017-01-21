@@ -1,18 +1,18 @@
 package com.chamago.bison;
 
 import com.chamago.bison.codec.BeanCallCode;
-import com.chamago.bison.codec.BisonCodecFactory;
+import com.chamago.bison.codec.netty.BisonChannelPipleFactory;
+import com.chamago.bison.codec.netty.BisonClientNettyHandler;
 import com.chamago.bison.dbpool.JdbcPoolManager;
 import com.chamago.bison.helper.BisonObject;
 import com.chamago.bison.helper.BisonObjectManage;
 import com.chamago.bison.logger.Logger;
 import com.chamago.bison.logger.LoggerFactory;
-import com.chamago.bison.node.MinaNode;
-import com.chamago.bison.node.NodeGroup;
+import com.chamago.bison.node.BisonNode;
+import com.chamago.bison.node.BisonGroup;
 import com.chamago.bison.queue.LinkListQueue;
 import com.chamago.bison.queue.CallQueueListener;
 import com.chamago.bison.queue.Handler;
-import com.chamago.bison.stream.BisonStreamClient;
 import com.chamago.bison.util.ByteUtil;
 import com.chamago.bison.util.ZipUtil;
 import com.chamago.bison.util.xml.JXmlWapper;
@@ -22,17 +22,21 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import org.apache.mina.core.future.ConnectFuture;
-import org.apache.mina.core.session.IoSession;
-import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.transport.socket.SocketConnector;
-import org.apache.mina.transport.socket.nio.NioSocketConnector;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
 
 /**
  * 
@@ -46,14 +50,14 @@ public class BisonContext
   private static final int CONNECT_TIMEOUT = 30;
   private static final boolean ZIP_FLAG = true;
   private static final String SESSION_NODE_KEY = "bison.conetxt.sesionn.key";
-  protected final Queue<MinaNode> connectQueue = new ConcurrentLinkedQueue<MinaNode>();
-  protected final ConcurrentHashMap<String, NodeGroup> groupMaps = new ConcurrentHashMap<String, NodeGroup>();
-  protected final Executor executor;
-  protected final Logger logger;
-  protected final LinkListQueue<BisonObject> sendQueue;
-  protected final LinkListQueue<Object> recvQueue;
-  protected final SocketConnector connector;
-  protected final BisonObjectManage[] amanager;
+  protected final Queue<BisonNode> connectQueue = new ConcurrentLinkedQueue<BisonNode>();
+  protected final ConcurrentHashMap<String, BisonGroup> groupMaps = new ConcurrentHashMap<String, BisonGroup>();
+  protected  Executor executor;
+  protected  Logger logger;
+  public  LinkListQueue<BisonObject> sendQueue;
+  public  LinkListQueue<Object> recvQueue;
+  public  Bootstrap bootstrap;
+  protected  BisonObjectManage[] amanager;
   protected boolean dispose = false;
   protected Processor processor;
   private String configFile;
@@ -94,26 +98,32 @@ public class BisonContext
       this.sThreads.put(String.valueOf(i), shandler);
       this.rThreads.put(String.valueOf(i), rhandler);
     }
-    this.connector = new NioSocketConnector();
 
-    this.connector.getSessionConfig().setSendBufferSize(4194304);
-    this.connector.getSessionConfig().setReceiveBufferSize(4194304);
-    this.connector.getSessionConfig().setTcpNoDelay(false);
-    this.connector.getSessionConfig().setKeepAlive(true);
-    this.connector.setConnectTimeoutMillis(CONNECT_TIMEOUT);
-    this.connector.getFilterChain().addLast("codec", new ProtocolCodecFilter(new BisonCodecFactory()));
-
-
-    this.connector.setHandler(new BisonClientHandler(this));
     this.amanager = new BisonObjectManage[10];
     Executor executor1 = Executors.newCachedThreadPool();
     for (int i = 0; i < 10; i++) {
       this.amanager[i] = new BisonObjectManage(executor1);
     }
 
+    initNettyBootstrap();
+
     load_config();
 
   }
+
+
+  public void initNettyBootstrap(){
+
+      final BisonClientNettyHandler handler = new BisonClientNettyHandler(this);
+      EventLoopGroup group = new NioEventLoopGroup();
+
+      bootstrap = new Bootstrap();
+      bootstrap.group(group)
+              .channel(NioSocketChannel.class)
+              .option(ChannelOption.TCP_NODELAY, true)
+              .handler(new BisonChannelPipleFactory(this));
+  }
+
 
   protected synchronized void startProcessor() {
     if ((this.processor == null) && (!this.dispose)) {
@@ -130,7 +140,7 @@ public class BisonContext
       String gid = gnode.getStringValue("@id");
       String gName = gnode.getStringValue("@name");
 
-      NodeGroup objGroup = new NodeGroup();
+      BisonGroup objGroup = new BisonGroup();
       objGroup.setGroupID(gid);
       objGroup.setGroupName(gName);
 
@@ -142,7 +152,7 @@ public class BisonContext
         String name = node.getStringValue("@name");
         int port = Integer.parseInt(node.getStringValue("@port"));
 
-        MinaNode objNode = new MinaNode();
+        BisonNode objNode = new BisonNode();
         objNode.setNodeID(nid);
         objNode.setNodeIp(nip);
         objNode.setPort(port);
@@ -201,15 +211,15 @@ public class BisonContext
   private int send_message_now(BisonObject obj) {
     int ret = 0;
     int idx = getManagerIdx(obj.getKey());
-    NodeGroup objGroup = (NodeGroup)this.groupMaps.get(obj.getGroupID());
+    BisonGroup objGroup = (BisonGroup)this.groupMaps.get(obj.getGroupID());
     if (objGroup != null) {
-      MinaNode objNode = objGroup.getNode();
+      BisonNode objNode = objGroup.getNode();
       if ((objNode != null) && (objNode.isConnected())) {
         this.amanager[idx].addObjectToManager(obj.getKey(), obj);
         if (obj.isAsync()) {
           this.amanager[idx].addToTimeOutMonitor(obj.getKey());
         }
-        ret = sendObject(obj, objNode.getSession());
+        ret = sendObject(obj, objNode.getChannel());
       } else {
     	if(objNode == null){
     		try {
@@ -234,21 +244,26 @@ public class BisonContext
     return ret;
   }
 
-  private int sendObject(BisonObject obj, IoSession session) {
+  private int sendObject(BisonObject obj, Channel session) {
     int ret = 0;
     try {
       int callType = obj.getCallType();
       if (callType == BeanCallCode.INTERFACE_CALL_ID) {
         byte[] data = ZipUtil.ZipObject(obj.getSendObject(), true);
 
-        byte[] buf = new byte[8 + data.length];
-        ByteUtil.writeInt(buf, 0, obj.getCallType());
-        ByteUtil.writeInt(buf, 4, obj.getKey());
-        System.arraycopy(data, 0, buf, 8, data.length);
+        ByteBuf byteBuf = Unpooled.buffer(8 + data.length);
+        //byte[] buf = new byte[8 + data.length];
+        byteBuf.writeInt(obj.getCallType());
+        byteBuf.writeInt(obj.getKey());
 
-        session.write(buf);
-        data = (byte[])null;
-        buf = (byte[])null;
+        byteBuf.writeBytes(data);
+//        ByteUtil.writeInt(buf, 0, obj.getCallType());
+//        ByteUtil.writeInt(buf, 4, obj.getKey());
+//        System.arraycopy(data, 0, buf, 8, data.length);
+//        session.wr
+        session.writeAndFlush(byteBuf);
+        data = null;
+        byteBuf = null;
         obj = null;
       } else {
         String methodName = obj.getMethodName();
@@ -282,17 +297,17 @@ public class BisonContext
   public void broadcast(Object message, String methodName)
   {
     try {
-      byte[] data = ZipUtil.ZipObject(message, true);
+//      byte[] data = ZipUtil.ZipObject(message, true);
+//
+//      byte[] buf = new byte[8 + data.length + methodName.length() + 1];
+//      ByteUtil.writeInt(buf, 0, 34952);
+//      ByteUtil.writeInt(buf, 4, 2147483647);
+//      ByteUtil.writeString(buf, 8, methodName);
+//      System.arraycopy(data, 0, buf, 8 + methodName.length() + 1, data.length);
 
-      byte[] buf = new byte[8 + data.length + methodName.length() + 1];
-      ByteUtil.writeInt(buf, 0, 34952);
-      ByteUtil.writeInt(buf, 4, 2147483647);
-      ByteUtil.writeString(buf, 8, methodName);
-      System.arraycopy(data, 0, buf, 8 + methodName.length() + 1, data.length);
-
-      this.connector.broadcast(buf);
-      data = (byte[])null;
-      buf = (byte[])null;
+      //this.connector.broadcast(buf);
+//      data = (byte[])null;
+//      buf = (byte[])null;
       message = null;
     } catch (Exception e) {
       this.logger.error("broadcast", e);
@@ -313,18 +328,19 @@ public class BisonContext
   public void destory() {
     this.dispose = true;
     this.connectQueue.clear();
-    Map mapt = this.connector.getManagedSessions();
-    Iterator iterator = mapt.keySet().iterator();
-    while (iterator.hasNext()) {
-      Long key = (Long)iterator.next();
-      ((IoSession)mapt.get(key)).close(true);
-    }
+      //this.bootstrap.
+//    Map mapt = this.connector.getManagedSessions();
+//    Iterator iterator = mapt.keySet().iterator();
+//    while (iterator.hasNext()) {
+//      Long key = (Long)iterator.next();
+//      ((IoSession)mapt.get(key)).close(true);
+//    }
     try {
       Thread.sleep(3000L);
     }
     catch (Exception localException) {
     }
-    this.connector.dispose();
+    this.bootstrap.group().shutdownGracefully();
     this.connectQueue.clear();
     this.groupMaps.clear();
     this.sendQueue.clear();
@@ -394,14 +410,15 @@ public class BisonContext
     {
       while (true)
       {
-        MinaNode node = (MinaNode)BisonContext.this.connectQueue.poll();
+        BisonNode node = (BisonNode)BisonContext.this.connectQueue.poll();
         if ((node == null) && (BisonContext.this.connectQueue.size() == 0)) {
           BisonContext.this.processor = null;
           break;
         }
-        ConnectFuture cf = BisonContext.this.connector.connect(node.getRemoteAddress());
+        ChannelFuture cf = BisonContext.this.bootstrap.connect(node.getNodeIp(),node.getPort());
+        //ConnectFuture cf = BisonContext.this.connector.connect(node.getRemoteAddress());
         cf.awaitUninterruptibly();
-        if (!cf.isConnected()) {
+        if (!cf.isSuccess()) {
           BisonContext.this.logger.info("建立连接失败 " + node.toString());
           try {
             if (BisonContext.this.connectQueue.size() == 0)
@@ -414,8 +431,9 @@ public class BisonContext
           }
           BisonContext.this.connectQueue.offer(node); continue;
         }
-        cf.getSession().setAttribute(SESSION_NODE_KEY, node);
-        node.setSession(cf.getSession());
+
+        //cf.setAttribute(SESSION_NODE_KEY, node);
+        node.setChannel(cf.channel());
         node.setConnected(true);
         BisonContext.this.logger.info("建立连接成功 " + node.toString());
       }

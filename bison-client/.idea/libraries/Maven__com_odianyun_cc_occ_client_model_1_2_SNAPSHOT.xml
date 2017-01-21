@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.odianyun.cc:occ-client-model:1.2-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/odianyun/cc/occ-client-model/1.2-SNAPSHOT/occ-client-model-1.2-20161123.034122-2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/odianyun/cc/occ-client-model/1.2-SNAPSHOT/occ-client-model-1.2-20161123.034122-2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/odianyun/cc/occ-client-model/1.2-SNAPSHOT/occ-client-model-1.2-20161123.034122-2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

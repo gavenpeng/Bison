@@ -10,11 +10,11 @@ import java.util.List;
  * 2013-10-16 下午04:20:58
  × bison-client
  */
-public class NodeGroup
+public class BisonGroup
 {
   private String groupID;
   private String groupName;
-  private List<MinaNode> lst = new ArrayList();
+  private List<BisonNode> lst = new ArrayList();
 
   private int pos = 0;
 
@@ -31,15 +31,15 @@ public class NodeGroup
     this.groupName = groupName;
   }
 
-  public void addNode(MinaNode objNode) {
+  public void addNode(BisonNode objNode) {
     this.lst.add(objNode);
   }
 
-  public synchronized MinaNode getNode() {
-    MinaNode obj = null;
+  public synchronized BisonNode getNode() {
+      BisonNode obj = null;
     for (int i = this.pos; i < this.lst.size(); i++) {
-      if (((MinaNode)this.lst.get(i)).isConnected()) {
-        obj = (MinaNode)this.lst.get(i);
+      if (((BisonNode)this.lst.get(i)).isConnected()) {
+        obj = (BisonNode)this.lst.get(i);
         this.pos += 1;
         if (this.pos < this.lst.size()) break;
         this.pos = 0;
@@ -49,8 +49,8 @@ public class NodeGroup
     }
     if (obj == null) {
       for (int i = 0; i < this.pos; i++) {
-        if (((MinaNode)this.lst.get(i)).isConnected()) {
-          obj = (MinaNode)this.lst.get(i);
+        if (((BisonNode)this.lst.get(i)).isConnected()) {
+          obj = (BisonNode)this.lst.get(i);
           this.pos = i;
           break;
         }

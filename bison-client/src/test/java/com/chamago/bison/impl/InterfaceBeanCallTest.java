@@ -3,6 +3,7 @@
  */
 package com.chamago.bison.impl;
 
+import java.io.File;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +32,14 @@ public class InterfaceBeanCallTest {
 	private long totalTime;
 	@Before
 	public void init() {
-		
-		System.setProperty("conf.dir", "E:\\cmg-projects\\bison-client\\conf");
-		context = new BisonContext(
-				"E:\\cmg-projects\\bison-client\\conf\\config.xml");
+
+        if (System.getProperty("conf.dir") == null) {
+            System.setProperty("conf.dir", "./conf");
+        }
+        String config = System.getProperty("conf.dir") + File.separator + "config.xml";
+
+		//System.setProperty("conf.dir", "E:\\cmg-projects\\bison-client\\conf");
+		context = new BisonContext(config);
 		sleep(2000);
 		System.out.println("==============init finished===================");
 	}
@@ -53,7 +58,7 @@ public class InterfaceBeanCallTest {
 		List<Thread> tList = new ArrayList<Thread>();
 		for (int i = 1; i <= threadNums; i++) {
 			Thread t = new Thread(new Runnable() {
-				@Override
+				//@Override
 				public void run() {
 					try {
 						interfaceStubBeanCall();
@@ -86,17 +91,16 @@ public class InterfaceBeanCallTest {
 			IUserService userS = (IUserService) RemoteObjectFactory
 					.findRemoteObject(IUserService.class, "1", context);
 			if (userS != null) {
-				List<User> uList = userS.findUsers("安睡宝");
+				String rs = userS.testNetty("this is bison test");
 				long et = System.currentTimeMillis();
 				//System.out.println("thread:"+Thread.currentThread().getName()+",num "+i+",RTT:" + (et - st));
-				if (uList != null && uList.size() > 0) {
-					for (User u : uList) {
-						System.out.println("username:" + u.getUserName()
-								+ ",password:" + u.getPassword());
-					}
-				} else {
-					System.out.println("not find user by nick");
-				}
+				if(rs !=null) {
+                    System.out.println("test is return ok:"+rs);
+                }else{
+                    System.out.println("not return");
+
+                }
+
 			}
 
 		}
@@ -109,18 +113,18 @@ public class InterfaceBeanCallTest {
 			IUserService userS = (IUserService) RemoteObjectFactory
 					.findRemoteObject(IUserService.class, "1", context);
 			if (userS != null) {
-				List<User> uList = userS.findUsers("安睡宝-"+0);
-				long et = System.currentTimeMillis();
-				totalTime+=(et - st);
-				System.out.println("thread:"+Thread.currentThread().getName()+",num "+0+",RTT:" + (et - st));
-				if (uList != null && uList.size() > 0) {
-//					for (User u : uList) {
-//						System.out.println("thread:"+Thread.currentThread().getName()+",username:" + u.getUserName()
-//								+ ",password:" + u.getPassword());
-//					}
-				} else {
-					System.out.println("not find user by nick");
-				}
+//				List<User> uList = userS.findUsers("安睡宝-"+0);
+//				long et = System.currentTimeMillis();
+//				totalTime+=(et - st);
+//				System.out.println("thread:"+Thread.currentThread().getName()+",num "+0+",RTT:" + (et - st));
+//				if (uList != null && uList.size() > 0) {
+////					for (User u : uList) {
+////						System.out.println("thread:"+Thread.currentThread().getName()+",username:" + u.getUserName()
+////								+ ",password:" + u.getPassword());
+////					}
+//				} else {
+//					System.out.println("not find user by nick");
+//				}
 
 			}
 

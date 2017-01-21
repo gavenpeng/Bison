@@ -2,12 +2,16 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+
   <groupId>com.chamago</groupId>
   <artifactId>bison-client</artifactId>
-  <version>1.0</version>
-  <packaging>jar</packaging>
+  <version>1.0.0</version>
+    <modules>
+        <module>untitled</module>
+    </modules>
+    <packaging>pom</packaging>
 
-  <name>rbc-client</name>
+  <name>bison-client</name>
   <url>http://maven.apache.org</url>
 
   <properties>
@@ -20,6 +24,12 @@
 	  <artifactId>mina-core</artifactId>
 	  <version>2.0.7</version>
 	</dependency>
+
+      <dependency>
+          <groupId>io.netty</groupId>
+          <artifactId>netty-all</artifactId>
+          <version>4.0.33.Final</version>
+      </dependency>
 	<dependency>
 	  <groupId>org.jdom</groupId>
 	  <artifactId>jdom2</artifactId>

@@ -15,7 +15,7 @@ public abstract class BisonImpl
   public static final int DEFAULT_TIME_OUT = 10;
   protected long createTime;
   private String groupID = "1";
-  protected int timeOut = 10;
+  protected int timeOut = 60;
 
   protected boolean ready = false;
   private static final long DEAD_LOCK_CHECK_INTERVAL = 5000L;

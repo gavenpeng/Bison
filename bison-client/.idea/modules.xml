@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/bison-client.iml" filepath="$PROJECT_DIR$/bison-client.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../bison/bison-server.iml" filepath="$PROJECT_DIR$/../bison/bison-server.iml" />
+      <module fileurl="file://$USER_HOME$/architecture/oseq/branches/1.3.0/oseq.iml" filepath="$USER_HOME$/architecture/oseq/branches/1.3.0/oseq.iml" />
+      <module fileurl="file://$USER_HOME$/architecture/oseq/branches/1.3.0/oseq-client/oseq-client.iml" filepath="$USER_HOME$/architecture/oseq/branches/1.3.0/oseq-client/oseq-client.iml" />
+      <module fileurl="file://$USER_HOME$/architecture/oseq/branches/1.3.0/oseq-common/oseq-common.iml" filepath="$USER_HOME$/architecture/oseq/branches/1.3.0/oseq-common/oseq-common.iml" />
+      <module fileurl="file://$USER_HOME$/architecture/oseq/branches/1.3.0/oseq-server/oseq-server.iml" filepath="$USER_HOME$/architecture/oseq/branches/1.3.0/oseq-server/oseq-server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/untitled/untitled.iml" filepath="$PROJECT_DIR$/untitled/untitled.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../user-demo/user-demo.iml" filepath="$PROJECT_DIR$/../../user-demo/user-demo.iml" />
+    </modules>
+  </component>
+</project>

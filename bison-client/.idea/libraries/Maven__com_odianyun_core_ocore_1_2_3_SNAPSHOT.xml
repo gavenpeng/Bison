@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.odianyun.core:ocore:1.2.3-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/odianyun/core/ocore/1.2.3-SNAPSHOT/ocore-1.2.3-20160929.080434-6.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/odianyun/core/ocore/1.2.3-SNAPSHOT/ocore-1.2.3-20160929.080434-6-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/odianyun/core/ocore/1.2.3-SNAPSHOT/ocore-1.2.3-20160929.080434-6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
