@@ -1,6 +1,7 @@
 package com.chamago.bison.server;
 
 import com.chamago.bison.codec.BisonCodecFactory;
+import com.chamago.bison.codec.netty.BisonChannelPipleFactory;
 import com.chamago.bison.loader.JarClassLoader;
 import com.chamago.bison.logger.Logger;
 import com.chamago.bison.logger.LoggerFactory;
@@ -11,7 +12,15 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.concurrent.Executors;
 
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.transport.socket.SocketAcceptor;
@@ -40,18 +49,25 @@ public class BisonServer
   
   private final Logger logger;
   private volatile boolean running = true;
+  private ClassLoader bcl;
   private BisonServerHandler minaHandler = null;
   private Thread reloadThread;
  
   public BisonServer() throws IOException {
+
+
+
 	if (System.getProperty("conf.dir") == null) {
 	   System.setProperty("conf.dir", "./conf");
 	}
+      System.setProperty("io.netty.noUnsafe","true");
     this.logger = LoggerFactory.getLogger("bison");
     props = new Properties();
     initBison();
+    initClassloader();
     addShutdownHook();
-    offerService();
+    //offerService();
+    offerNettyService();
     System.setProperty("SYSTEM_PROCESS_RECV_THREADS", String.valueOf(handlers));
     this.logger.info("Bison Server Listening on port " + port);
     this.logger.info("Bison Server config file {}/{}", System.getProperty("conf.dir"), "config.xml");
@@ -94,8 +110,15 @@ public class BisonServer
 	    }
 	  
   }
-  
-  
+
+
+  private void initClassloader(){
+      this.bcl = new JarClassLoader();
+  }
+
+  public ClassLoader getClassLoader(){
+      return this.bcl;
+  }
   protected void offerService() throws IOException{
 	  SocketAcceptor acceptor = new NioSocketAcceptor();
       acceptor.setReuseAddress(true);
@@ -116,6 +139,23 @@ public class BisonServer
       acceptor.bind(new InetSocketAddress(port));
 	  
   }
+
+  protected void offerNettyService() throws IOException{
+
+        EventLoopGroup bossGroup = new NioEventLoopGroup();
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        ServerBootstrap bootstrap = new ServerBootstrap();
+        bootstrap.group(bossGroup,workerGroup)
+        .channel(NioServerSocketChannel.class)
+        .option(ChannelOption.SO_BACKLOG,1024)
+        .childHandler(new BisonChannelPipleFactory(this));
+
+        // Bind and start to accept incoming connections.
+        bootstrap.bind(new InetSocketAddress(port));
+
+        logger.info("Bison server startup successfully,listener to port {}",port);
+
+    }
   
   public void addShutdownHook(){
 	  Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -128,7 +168,7 @@ public class BisonServer
   public void stopService(){
 	 this.logger.info("Bison Server start exit server on port " + port+"......");
 	 this.running = false;
-	 this.reloadThread.interrupt();
+	 //this.reloadThread.interrupt();
 	 this.minaHandler.cleanAll(); 
 	 this.logger.info("Bison Server is stoped");
   }

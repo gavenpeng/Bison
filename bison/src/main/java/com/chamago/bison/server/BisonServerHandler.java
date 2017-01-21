@@ -55,25 +55,25 @@ public class BisonServerHandler extends IoHandlerAdapter
     this.pool = new JdbcPoolManager(cfgFile);
     this.pool.loadDataSource();
 
-    this.recvQueue = new LinkListQueue<Call>();
-    this.processor = new BisonBusiProcessor();
-    int handlers = bison.getHandlers();
-    this.hThreads = new Hashtable<String, Handler>(handlers);
-    CallQueueListener<Call> listener = new RecvListener<Call>();
-    for (int i = 0; i < handlers; i++) {
-    	
-      Handler handler = new Handler(recvQueue,i,"CallQueueConsumeThread");
-      ServiceContext sc = new ServiceContext();
-      sc.setJdbcPoolManager(this.pool);
-      sc.setThreadID(i);
-      handler.setAttachment(sc);
-      handler.registerListener(listener);
-      handler.setDaemon(true);
-      handler.start();
-      this.hThreads.put(String.valueOf(i), handler);
-    }
-    rtm = new BisonThreadManager(cfgFile,this);
-    rtm.startBisonThread(null, this.pool);
+//    this.recvQueue = new LinkListQueue<Call>();
+//    this.processor = new BisonBusiProcessor();
+//    int handlers = bison.getHandlers();
+//    this.hThreads = new Hashtable<String, Handler>(handlers);
+//    CallQueueListener<Call> listener = new RecvListener<Call>();
+//    for (int i = 0; i < handlers; i++) {
+//
+//      Handler handler = new Handler(recvQueue,i,"CallQueueConsumeThread");
+//      ServiceContext sc = new ServiceContext();
+//      sc.setJdbcPoolManager(this.pool);
+//      sc.setThreadID(i);
+//      handler.setAttachment(sc);
+//      handler.registerListener(listener);
+//      handler.setDaemon(true);
+//      handler.start();
+//      this.hThreads.put(String.valueOf(i), handler);
+//    }
+    //rtm = new BisonThreadManager(cfgFile,this);
+    //rtm.startBisonThread(null, this.pool);
   }
 
   
@@ -193,17 +193,17 @@ public class BisonServerHandler extends IoHandlerAdapter
     public void processQueueElement(E o, int threadID)
     {
       BisonServerHandler.Call obj = (BisonServerHandler.Call)o;
-      try {
-        BisonServerHandler.this.processor.process_message(obj.session, obj.message, BisonServerHandler.this.pool, threadID);
-        callQueueSize.add(obj.size*-1);
-      } catch (Exception e) {
-        BisonServerHandler.this.logger.error("", e);
-      } finally {
-        obj.session = null;
-        obj.message = null;
-        obj.size = 0;
-        obj = null;
-      }
+//      try {
+//        BisonServerHandler.this.processor.process_message(obj.session, obj.message, BisonServerHandler.this.pool, threadID);
+//        callQueueSize.add(obj.size*-1);
+//      } catch (Exception e) {
+//        BisonServerHandler.this.logger.error("", e);
+//      } finally {
+//        obj.session = null;
+//        obj.message = null;
+//        obj.size = 0;
+//        obj = null;
+//      }
     }
   }
 

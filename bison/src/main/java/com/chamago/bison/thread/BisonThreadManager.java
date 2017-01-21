@@ -1,5 +1,6 @@
 package com.chamago.bison.thread;
 
+import com.chamago.bison.codec.netty.BisonServerNettyHandler;
 import com.chamago.bison.dbpool.JdbcPoolManager;
 import com.chamago.bison.loader.JarClassLoader;
 import com.chamago.bison.logger.Logger;
@@ -22,12 +23,12 @@ public class BisonThreadManager
 {
   private HashMap<String, BisonAbstractThread> hRbcBusiThreads;
   private int state = 0;
-  protected BisonServerHandler handler;
+  protected BisonServerNettyHandler handler;
   private long configFileLastModified;
   protected final Logger logger = LoggerFactory.getLogger("bison");
   private String configFile;
 
-  public BisonThreadManager(String cfgFile,BisonServerHandler handler)
+  public BisonThreadManager(String cfgFile,BisonServerNettyHandler handler)
   {
 	this.handler = handler;
     this.configFile = cfgFile;
@@ -35,11 +36,11 @@ public class BisonThreadManager
     this.hRbcBusiThreads = new HashMap<String, BisonAbstractThread>();
   }
 
-  public void addRbcThread(BisonAbstractThread objThread) {
+  public void addBisonThread(BisonAbstractThread objThread) {
     this.hRbcBusiThreads.put(objThread.getThreadID(), objThread);
   }
 
-  public void startRbcThread(String ids, JdbcPoolManager pool) {
+  public void startBisonThread(String ids, JdbcPoolManager pool) {
     if (this.state != 0) {
       return;
     }
@@ -74,7 +75,7 @@ public class BisonThreadManager
             mct.settManager(this);
             mct.thread_init(xml.getXmlNode("config"));
             mct.startThread();
-            addRbcThread(mct);
+            addBisonThread(mct);
 
             this.logger.info("启动业务线程 " + desc);
           } catch (Exception e1) {
@@ -91,7 +92,8 @@ public class BisonThreadManager
   }
 
   public void flushClientAccessips(String accessIps){
-	  handler.setAccessIps(accessIps);
+
+      //handler.setAccessIps(accessIps);
   }
   
   

@@ -11,6 +11,10 @@ import com.chamago.bison.util.ZipUtil;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import org.apache.mina.core.session.IoSession;
 
 /**
@@ -46,8 +50,15 @@ public class BisonBusiProcessor
     this.myClassLoader = clsLoader;
   }
 
-  public void process_message(IoSession session, Object message, JdbcPoolManager pool, int tid) {
-    byte[] msg = (byte[])message;
+
+
+
+
+  public void process_message(Channel session, Object message, JdbcPoolManager pool, int tid) {
+
+
+
+      byte[] msg = (byte[])message;
 
     int callType = ByteUtil.readInt(msg, 0);
     int skey = ByteUtil.readInt(msg, 4);
@@ -60,7 +71,7 @@ public class BisonBusiProcessor
     message = null;
   }
 
-  private void process_interfacecall(IoSession session, byte[] msg, JdbcPoolManager pool, int tid, int skey) {
+  private void process_interfacecall(Channel session, byte[] msg, JdbcPoolManager pool, int tid, int skey) {
     
 	InterfaceCallInfo callInfo = (InterfaceCallInfo)ZipUtil.UnzipObject(msg, 8, msg.length, this.myClassLoader, ZIP_FLAG);
     int flag = callInfo.getCallFlag();
@@ -130,19 +141,29 @@ public class BisonBusiProcessor
     }
 
     byte[] b1 = ZipUtil.ZipObject(callInfo, true);
-    byte[] buf = new byte[b1.length + 12];
+    //byte[] buf = new byte[b1.length + 12];
 
-    ByteUtil.writeInt(buf, 0, BeanCallCode.INTERFACE_CALL_ID);
-    ByteUtil.writeInt(buf, 4, skey);
-    ByteUtil.writeInt(buf, 8, ret);
-    System.arraycopy(b1, 0, buf, 12, b1.length);
 
-    session.write(buf);
-    buf = (byte[])null;
-    b1 = (byte[])null;
+      ByteBuf byteBuf = Unpooled.buffer(b1.length + 12);
+      //byte[] buf = new byte[8 + data.length];
+      byteBuf.writeInt(BeanCallCode.INTERFACE_CALL_ID);
+      byteBuf.writeInt(skey);
+      byteBuf.writeInt(ret);
+      byteBuf.writeBytes(b1);
+
+
+//    ByteUtil.writeInt(buf, 0, );
+//    ByteUtil.writeInt(buf, 4, skey);
+//    ByteUtil.writeInt(buf, 8, ret);
+//    System.arraycopy(b1, 0, buf, 12, b1.length);
+
+      session.writeAndFlush(byteBuf);
+    //session.write(buf);
+      byteBuf = null;
+      b1 = null;
   }
 
-  private void process_beancall(IoSession session, byte[] msg, JdbcPoolManager pool, int tid, int skey) {
+  private void process_beancall(Channel session, byte[] msg, JdbcPoolManager pool, int tid, int skey) {
     String methodNames = ByteUtil.readString(msg, 8);
 
     Object obj = ZipUtil.UnzipObject(msg, 8 + methodNames.length() + 1, msg.length, this.myClassLoader, ZIP_FLAG);
@@ -160,7 +181,7 @@ public class BisonBusiProcessor
         }
         objStub = this.caches.get(beanName);
       } catch (Exception e1) {
-        this.logger.error("BisonServerHandler::messageReceived ---> 类" + beanName + "Stub 不存在");
+        this.logger.error("BisonServerNettyHandler::messageReceived ---> 类" + beanName + "Stub 不存在");
         objStub = null;
       }
     }
@@ -200,19 +221,19 @@ public class BisonBusiProcessor
 
             objMethod.invoke(objStub, params);
           } catch (Exception e) {
-            this.logger.error("BisonServerHandler::messageReceived ---> 方法" + beanName + "Stub." + methodName + " 出现异常");
+            this.logger.error("BisonServerNettyHandler::messageReceived ---> 方法" + beanName + "Stub." + methodName + " 出现异常");
             this.logger.error("", e);
             ret = -5;
             break;
           }
         } else {
-          this.logger.error("BisonServerHandler::messageReceived ---> 方法" + beanName + "Stub." + methodName + " 不存在");
+          this.logger.error("BisonServerNettyHandler::messageReceived ---> 方法" + beanName + "Stub." + methodName + " 不存在");
           ret = -4;
           break;
         }
       }
     } else {
-      this.logger.error("BisonServerHandler::messageReceived ---> 类" + beanName + " 不存在");
+      this.logger.error("BisonServerNettyHandler::messageReceived ---> 类" + beanName + " 不存在");
       ret = -3;
     }
     l = System.currentTimeMillis() - l;

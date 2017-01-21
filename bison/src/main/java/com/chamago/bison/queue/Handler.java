@@ -1,6 +1,6 @@
 package com.chamago.bison.queue;
 
-import com.chamago.bison.server.BisonServerHandler.Call;
+import com.chamago.bison.core.Call;
 import com.chamago.bison.util.StringUtil;
 
 /**
