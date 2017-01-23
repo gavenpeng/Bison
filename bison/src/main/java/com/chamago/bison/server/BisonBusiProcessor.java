@@ -1,5 +1,7 @@
 package com.chamago.bison.server;
 
+import com.caucho.hessian.io.Hessian2Input;
+import com.caucho.hessian.io.Hessian2Output;
 import com.chamago.bison.codec.BeanCallCode;
 import com.chamago.bison.codec.InterfaceCallInfo;
 import com.chamago.bison.dbpool.JdbcPoolManager;
@@ -9,6 +11,9 @@ import com.chamago.bison.util.ByteUtil;
 import com.chamago.bison.util.StringUtil;
 import com.chamago.bison.util.ZipUtil;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
@@ -54,7 +59,7 @@ public class BisonBusiProcessor
 
 
 
-  public void process_message(Channel session, Object message, JdbcPoolManager pool, int tid) {
+  public void process_message(Channel session, Object message, JdbcPoolManager pool, int tid) throws IOException {
 
 
 
@@ -62,18 +67,18 @@ public class BisonBusiProcessor
 
     int callType = ByteUtil.readInt(msg, 0);
     int skey = ByteUtil.readInt(msg, 4);
-    if (callType == BeanCallCode.BEAN_CALL_ID)
-      process_beancall(session, msg, pool, tid, skey); 
-    else if (callType == BeanCallCode.INTERFACE_CALL_ID) {
+    if (callType == BeanCallCode.INTERFACE_CALL_ID) {
       process_interfacecall(session, msg, pool, tid, skey);
     }
     msg = (byte[])null;
     message = null;
   }
 
-  private void process_interfacecall(Channel session, byte[] msg, JdbcPoolManager pool, int tid, int skey) {
-    
-	InterfaceCallInfo callInfo = (InterfaceCallInfo)ZipUtil.UnzipObject(msg, 8, msg.length, this.myClassLoader, ZIP_FLAG);
+  private void process_interfacecall(Channel session, byte[] msg, JdbcPoolManager pool, int tid, int skey) throws IOException {
+
+      ByteArrayInputStream in = new ByteArrayInputStream(msg,8,msg.length);
+      Hessian2Input is = new Hessian2Input(in);
+      InterfaceCallInfo callInfo = (InterfaceCallInfo)is.readObject();
     int flag = callInfo.getCallFlag();
     int ret = 0;
     if (flag == 1) {
@@ -140,117 +145,24 @@ public class BisonBusiProcessor
       callInfo.setResult(result);
     }
 
-    byte[] b1 = ZipUtil.ZipObject(callInfo, true);
-    //byte[] buf = new byte[b1.length + 12];
+
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      Hessian2Output out = new Hessian2Output(bos);
+      out.writeObject(callInfo);
+      byte[] data = bos.toByteArray();
 
 
-      ByteBuf byteBuf = Unpooled.buffer(b1.length + 12);
-      //byte[] buf = new byte[8 + data.length];
+      ByteBuf byteBuf = Unpooled.buffer(data.length + 12);
       byteBuf.writeInt(BeanCallCode.INTERFACE_CALL_ID);
       byteBuf.writeInt(skey);
       byteBuf.writeInt(ret);
-      byteBuf.writeBytes(b1);
-
-
-//    ByteUtil.writeInt(buf, 0, );
-//    ByteUtil.writeInt(buf, 4, skey);
-//    ByteUtil.writeInt(buf, 8, ret);
-//    System.arraycopy(b1, 0, buf, 12, b1.length);
+      byteBuf.writeBytes(data);
 
       session.writeAndFlush(byteBuf);
     //session.write(buf);
       byteBuf = null;
-      b1 = null;
+      data = null;
   }
 
-  private void process_beancall(Channel session, byte[] msg, JdbcPoolManager pool, int tid, int skey) {
-    String methodNames = ByteUtil.readString(msg, 8);
 
-    Object obj = ZipUtil.UnzipObject(msg, 8 + methodNames.length() + 1, msg.length, this.myClassLoader, ZIP_FLAG);
-    String beanName = obj.getClass().getName();
-    msg = (byte[])null;
-
-    Object objStub = this.caches.get(beanName);
-    if (objStub == null) {
-      try {
-        synchronized (this.caches) {
-          if(this.caches.get(beanName) == null){
-        	  objStub = this.myClassLoader.loadClass(beanName + "Stub").newInstance();
-        	  this.caches.put(beanName, objStub);
-          }
-        }
-        objStub = this.caches.get(beanName);
-      } catch (Exception e1) {
-        this.logger.error("BisonServerNettyHandler::messageReceived ---> 类" + beanName + "Stub 不存在");
-        objStub = null;
-      }
-    }
-
-    int ret = 0;
-    if (methodNames.length() == 0) {
-      methodNames = "BeanCall";
-    }
-    String[] ss = StringUtil.splitter(methodNames, ",");
-    long l = System.currentTimeMillis();
-    if (objStub != null) {
-      for (int i = 0; i < ss.length; i++) {
-        String methodName = ss[i];
-        Method objMethod = (Method)this.m_caches.get(beanName + "Stub." + methodName);
-        if (objMethod == null) {
-          try {
-            synchronized (this.m_caches) {
-              if(this.m_caches.get(beanName + "Stub." + methodName) == null){
-            	  objMethod = objStub.getClass().getMethod(methodName, new Class[] { obj.getClass(), JdbcPoolManager.class, Integer.class });
-            	  this.m_caches.put(beanName + "Stub." + methodName, objMethod);
-              }
-            }
-            objMethod = (Method)this.m_caches.get(beanName + "Stub." + methodName);
-          }
-          catch (Exception e) {
-            e.printStackTrace();
-            objMethod = null;
-          }
-        }
-
-        if (objMethod != null) {
-          try {
-            Object[] params = new Object[3];
-            params[0] = obj;
-            params[1] = pool;
-            params[2] = Integer.valueOf(tid);
-
-            objMethod.invoke(objStub, params);
-          } catch (Exception e) {
-            this.logger.error("BisonServerNettyHandler::messageReceived ---> 方法" + beanName + "Stub." + methodName + " 出现异常");
-            this.logger.error("", e);
-            ret = -5;
-            break;
-          }
-        } else {
-          this.logger.error("BisonServerNettyHandler::messageReceived ---> 方法" + beanName + "Stub." + methodName + " 不存在");
-          ret = -4;
-          break;
-        }
-      }
-    } else {
-      this.logger.error("BisonServerNettyHandler::messageReceived ---> 类" + beanName + " 不存在");
-      ret = -3;
-    }
-    l = System.currentTimeMillis() - l;
-    if (l > 2000L) {
-      this.logger.warn("Bean调用时间过长 BeanName=" + beanName + "." + methodNames + " " + l / 1000L);
-    }
-
-    byte[] b1 = ZipUtil.ZipObject(obj, true);
-    byte[] buf = new byte[b1.length + 12];
-
-    ByteUtil.writeInt(buf, 0, BeanCallCode.BEAN_CALL_ID);
-    ByteUtil.writeInt(buf, 4, skey);
-    ByteUtil.writeInt(buf, 8, ret);
-    System.arraycopy(b1, 0, buf, 12, b1.length);
-
-    session.write(buf);
-    buf = (byte[])null;
-    b1 = (byte[])null;
-  }
 }

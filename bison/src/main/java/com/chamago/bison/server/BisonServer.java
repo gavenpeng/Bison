@@ -60,7 +60,7 @@ public class BisonServer
 	if (System.getProperty("conf.dir") == null) {
 	   System.setProperty("conf.dir", "./conf");
 	}
-      System.setProperty("io.netty.noUnsafe","true");
+      //System.setProperty("io.netty.noUnsafe","true");
     this.logger = LoggerFactory.getLogger("bison");
     props = new Properties();
     initBison();
@@ -119,26 +119,7 @@ public class BisonServer
   public ClassLoader getClassLoader(){
       return this.bcl;
   }
-  protected void offerService() throws IOException{
-	  SocketAcceptor acceptor = new NioSocketAcceptor();
-      acceptor.setReuseAddress(true);
-      acceptor.getSessionConfig().setReadBufferSize(readBufferSize);
-      acceptor.getSessionConfig().setSendBufferSize(sendBufferSize);
-      acceptor.getSessionConfig().setReceiveBufferSize(receiveBufferSize);
-      acceptor.getSessionConfig().setTcpNoDelay(false);
-      acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 60);
 
-      acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new BisonCodecFactory()));
-
-      this.minaHandler = new BisonServerHandler(this);
-      this.minaHandler.setClassLoader(new JarClassLoader());
-      acceptor.setHandler(this.minaHandler);
-
-      this.reloadThread = new ReloadBusiThread();
-      this.reloadThread.start();
-      acceptor.bind(new InetSocketAddress(port));
-	  
-  }
 
   protected void offerNettyService() throws IOException{
 
