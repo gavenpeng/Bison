@@ -40,7 +40,7 @@ public class BisonThreadManager
     this.hRbcBusiThreads.put(objThread.getThreadID(), objThread);
   }
 
-  public void startBisonThread(String ids, JdbcPoolManager pool) {
+  public void startBisonThread(String ids) {
     if (this.state != 0) {
       return;
     }
@@ -70,7 +70,7 @@ public class BisonThreadManager
             mct.setName(desc);
             mct.setThreadInterval(interval);
             mct.setThreadIdx(i);
-            mct.setJdbcPoolManager(pool);
+            //mct.setJdbcPoolManager(pool);
             mct.setLastModified(this.configFileLastModified);
             mct.settManager(this);
             mct.thread_init(xml.getXmlNode("config"));

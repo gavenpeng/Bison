@@ -59,7 +59,7 @@ public class BisonBusiProcessor
 
 
 
-  public void process_message(Channel session, Object message, JdbcPoolManager pool, int tid) throws IOException {
+  public void process_message(Channel session, Object message, int tid) throws IOException {
 
 
 
@@ -68,13 +68,13 @@ public class BisonBusiProcessor
     int callType = ByteUtil.readInt(msg, 0);
     int skey = ByteUtil.readInt(msg, 4);
     if (callType == BeanCallCode.INTERFACE_CALL_ID) {
-      process_interfacecall(session, msg, pool, tid, skey);
+      process_interfacecall(session, msg, tid, skey);
     }
     msg = (byte[])null;
     message = null;
   }
 
-  private void process_interfacecall(Channel session, byte[] msg, JdbcPoolManager pool, int tid, int skey) throws IOException {
+  private void process_interfacecall(Channel channel, byte[] msg, int tid, int skey) throws IOException {
 
       ByteArrayInputStream in = new ByteArrayInputStream(msg,8,msg.length);
       Hessian2Input is = new Hessian2Input(in);
@@ -149,6 +149,7 @@ public class BisonBusiProcessor
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       Hessian2Output out = new Hessian2Output(bos);
       out.writeObject(callInfo);
+      out.flush();
       byte[] data = bos.toByteArray();
 
 
@@ -158,7 +159,9 @@ public class BisonBusiProcessor
       byteBuf.writeInt(ret);
       byteBuf.writeBytes(data);
 
-      session.writeAndFlush(byteBuf);
+      channel.writeAndFlush(byteBuf);
+      //byteBuf.release();
+      //ByteBuf.release();
     //session.write(buf);
       byteBuf = null;
       data = null;

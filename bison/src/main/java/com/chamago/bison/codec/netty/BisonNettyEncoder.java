@@ -20,8 +20,6 @@ public class BisonNettyEncoder extends MessageToByteEncoder {
             throw new IllegalArgumentException("The encoded object is too big: " + objectSize + " (> " + "4M" + ')');
         }
 
-        System.out.println("writer msg to server:"+objectSize);
-
         out.writeInt(objectSize);
         out.writeBytes(tmp);
 

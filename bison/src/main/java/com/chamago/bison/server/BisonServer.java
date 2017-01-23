@@ -60,7 +60,7 @@ public class BisonServer
 	if (System.getProperty("conf.dir") == null) {
 	   System.setProperty("conf.dir", "./conf");
 	}
-      //System.setProperty("io.netty.noUnsafe","true");
+      System.setProperty("io.netty.noUnsafe","true");
     this.logger = LoggerFactory.getLogger("bison");
     props = new Properties();
     initBison();
@@ -78,6 +78,8 @@ public class BisonServer
     throws Exception
   {
 	new BisonServer();
+
+    Thread.sleep(200000);
   }
 
   private void initBison(){
@@ -150,7 +152,7 @@ public class BisonServer
 	 this.logger.info("Bison Server start exit server on port " + port+"......");
 	 this.running = false;
 	 //this.reloadThread.interrupt();
-	 this.minaHandler.cleanAll(); 
+	 //this.minaHandler.cleanAll();
 	 this.logger.info("Bison Server is stoped");
   }
   
