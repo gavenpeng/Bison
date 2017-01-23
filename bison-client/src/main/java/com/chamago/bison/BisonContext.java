@@ -1,5 +1,7 @@
 package com.chamago.bison;
 
+import com.caucho.hessian.io.Hessian2Input;
+import com.caucho.hessian.io.Hessian2Output;
 import com.chamago.bison.codec.BeanCallCode;
 import com.chamago.bison.codec.netty.BisonChannelPipleFactory;
 import com.chamago.bison.codec.netty.BisonClientNettyHandler;
@@ -17,6 +19,8 @@ import com.chamago.bison.util.ByteUtil;
 import com.chamago.bison.util.ZipUtil;
 import com.chamago.bison.util.xml.JXmlWapper;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -190,7 +194,9 @@ public class BisonContext
         if (o != null) {
           Object obj = null;
           if(ret!=BeanCallCode.CALL_SEROVERLOAD){
-        	  obj  = ZipUtil.UnzipObject(msg, 12, msg.length, null, true);
+              ByteArrayInputStream in = new ByteArrayInputStream(msg,12,msg.length);
+              Hessian2Input is = new Hessian2Input(in);
+              obj = is.readObject();
           }
           o._onReceiveMessageEvent(ret, obj);
           obj = null;
@@ -244,47 +250,26 @@ public class BisonContext
     return ret;
   }
 
-  private int sendObject(BisonObject obj, Channel session) {
+  private int sendObject(BisonObject obj, Channel channel) {
     int ret = 0;
     try {
       int callType = obj.getCallType();
       if (callType == BeanCallCode.INTERFACE_CALL_ID) {
-        byte[] data = ZipUtil.ZipObject(obj.getSendObject(), true);
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Hessian2Output out = new Hessian2Output(bos);
+        out.writeObject(obj);
+        out.flush();
+        byte[] data = bos.toByteArray();
 
         ByteBuf byteBuf = Unpooled.buffer(8 + data.length);
-        //byte[] buf = new byte[8 + data.length];
         byteBuf.writeInt(obj.getCallType());
         byteBuf.writeInt(obj.getKey());
-
         byteBuf.writeBytes(data);
-//        ByteUtil.writeInt(buf, 0, obj.getCallType());
-//        ByteUtil.writeInt(buf, 4, obj.getKey());
-//        System.arraycopy(data, 0, buf, 8, data.length);
-//        session.wr
-        session.writeAndFlush(byteBuf);
+        channel.writeAndFlush(byteBuf);
         data = null;
         byteBuf = null;
         obj = null;
-      } else {
-        String methodName = obj.getMethodName();
-        methodName = methodName == null ? "BeanCall" : methodName;
-
-        byte[] data = ZipUtil.ZipObject(obj.getSendObject(), true);
-
-        if (data == null) {
-          this.logger.error("please check send object is seriable! " + obj.getSendObject().getClass().getName());
-        }
-        else {
-          byte[] buf = new byte[8 + data.length + methodName.length() + 1];
-          ByteUtil.writeInt(buf, 0, obj.getCallType());
-          ByteUtil.writeInt(buf, 4, obj.getKey());
-          ByteUtil.writeString(buf, 8, methodName);
-          System.arraycopy(data, 0, buf, 8 + methodName.length() + 1, data.length);
-          session.write(buf);
-          data = (byte[])null;
-          buf = (byte[])null;
-          obj = null;
-        }
       }
     } catch (Exception e) {
       this.logger.error("sendObject", e);
