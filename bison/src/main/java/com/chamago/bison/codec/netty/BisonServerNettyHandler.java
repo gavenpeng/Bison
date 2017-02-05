@@ -68,6 +68,7 @@ public class BisonServerNettyHandler extends SimpleChannelInboundHandler {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
 
+        System.setOut(null);
         ByteBuf buf = (ByteBuf)msg;
         int callSize = buf.writerIndex();
         if((callSize+callQueueSize.get())>bison.getMaxQueueSize()){
